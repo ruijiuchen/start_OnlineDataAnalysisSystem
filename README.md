@@ -1,4 +1,4 @@
-# quick guid of queqiao
+# Quick guide of queqiao
 1. Download the code from github with command:
 
    	    git clone  https://github.com/ruijiuchen/queqiao.git
