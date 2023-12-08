@@ -11,7 +11,7 @@ This will install all the required packages specified in the requirements.txt fi
 
 3. Install queqiao program via:
 
-   	   pip install ./
+   	   pip install .
 
 4. Execute the code:
 Before execute the code, make sure the paths in the file "pathsettings.toml" are correct.
