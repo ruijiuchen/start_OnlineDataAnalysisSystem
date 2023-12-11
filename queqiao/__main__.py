@@ -34,26 +34,29 @@ def is_file_written(directory,file, timeout=10):
     return False
 
 def list_files_in_directory(directory, end=".iq.tdms"):
+    #print("chenrj list_files_in_directory 1 ")
     try:
         files0 = os.listdir(directory)
     except FileNotFoundError:
         # If the directory doesn't exist, return an empty list
         files0 = []
-
+    #print("chenrj list_files_in_directory 2 ")
     files=[]
     #print("list_files_in_directory ",len(files0))
     for i in range(0, len(files0)):
+        #print("chenrj list_files_in_directory 2-1 ")
         if i <len(files0) - 2:
             if files0[i].endswith(end):  # Check if the file has the .tdms extension
                 files.append(files0[i])
         else:
             #print("last two files",files0[i])
-            if is_file_written(directory,files0[i],15) and files0[i].endswith(end):
+            if is_file_written(directory,files0[i],15) and files0[i].endswith(end): # bug here.
                 files.append(files0[i])
-    
+    #print("chenrj list_files_in_directory 3 ")
     sorted_files = sorted(files)  # Sort files by name
+    #print("chenrj list_files_in_directory 4 ")
     return sorted_files
-    
+    #return files
 def browse_folder_and_update_list_filebox(folder_entry, default_path,file_listbox, analyzed_files_name="synced_files_iq.txt",end=".iq.tdms"):
     selected_directory = filedialog.askdirectory(initialdir=default_path)
     if selected_directory:
@@ -167,9 +170,9 @@ def set_listbox_iterm_color(file_listbox, file, color="green"):
 def sync_files_worker_iq(default_path_ntcap_iq,default_path_luster_iq, file_listbox_iq,file_listbox_sc,start_button,should_stop_sync,elapsed_times_iq):
     while not should_stop_sync[0]:
         time.sleep(5)
-        with open('paths_iq.txt', 'w') as f:
-            f.write(f"{default_path_ntcap_iq}\n")
-            f.write(f"{default_path_luster_iq}\n")
+        #with open('paths_iq.txt', 'w') as f:
+        #    f.write(f"{default_path_ntcap_iq}\n")
+        #    f.write(f"{default_path_luster_iq}\n")
             
         if default_path_ntcap_iq:
         
@@ -216,14 +219,14 @@ def sync_files_worker_iq(default_path_ntcap_iq,default_path_luster_iq, file_list
 def sync_files_worker_sc(default_path_ntcap_sc, default_path_luster_sc ,file_listbox_iq,file_listbox_sc,start_button,should_stop_sync):
     while not should_stop_sync[0]:
         time.sleep(5)
-        with open('paths_sc.txt', 'w') as f:
-            f.write(f"{default_path_ntcap_sc}\n")
-            f.write(f"{default_path_luster_sc}\n")
+        #with open('paths_sc.txt', 'w') as f:
+        #    f.write(f"{default_path_ntcap_sc}\n")
+        #    f.write(f"{default_path_luster_sc}\n")
         ################ sc #################################################
         if default_path_ntcap_sc:
-
+            #print("chenrj 1")
             update_file_list(file_listbox_sc,default_path_ntcap_sc,"synced_files_sc.txt",".sc.tdms")# Update the file list with the new directory
-            
+            #print("chenrj 2")
             synced_files = get_synced_files("synced_files_sc.txt")        
             files = list_files_in_directory(default_path_ntcap_sc,".sc.tdms")
             for file in files:
@@ -327,13 +330,13 @@ def reset_sim_worker_iq(file_listbox_iq,default_path_ntcap_iq,file_listbox_sc,de
         subprocess.run(command, shell=True, check=True)
     except subprocess.CalledProcessError:
         print(f"rm -v /data.local1/simulated_data/iq/IQ_2021-05-10_00-14-45/* faild.")
+    update_file_list(file_listbox_iq,default_path_ntcap_iq,"synced_files_iq.txt",".iq.tdms")
     
     command = f"sh /data.local1/simulated_data/auto_copy_iq.sh"
     try:
         subprocess.run(command, shell=True, check=True)
     except subprocess.CalledProcessError:
         print(f"sh /data.local1/simulated_data/auto_copy_iq.sh")
-    update_file_list(file_listbox_iq,default_path_ntcap_iq,"synced_files_iq.txt",".iq.tdms")
         
 def reset_sim_worker_sc(file_listbox_iq,default_path_ntcap_iq,file_listbox_sc,default_path_ntcap_sc):
     command = f"cd /data.local1/simulated_data/"
@@ -347,13 +350,13 @@ def reset_sim_worker_sc(file_listbox_iq,default_path_ntcap_iq,file_listbox_sc,de
         subprocess.run(command, shell=True, check=True)
     except subprocess.CalledProcessError:
         print(f"rm -v /data.local1/simulated_data/sc/SC_2021-05-10_00-14-45/* faild.")
+    update_file_list(file_listbox_sc,default_path_ntcap_sc,"synced_files_sc.txt",".sc.tdms")
     
     command = f"sh /data.local1/simulated_data/auto_copy_sc.sh"
     try:
         subprocess.run(command, shell=True, check=True)
     except subprocess.CalledProcessError:
         print(f"sh /data.local1/simulated_data/auto_copy_sc.sh")
-    update_file_list(file_listbox_sc,default_path_ntcap_sc,"synced_files_sc.txt",".sc.tdms")
         
 def reset_sim(file_listbox_iq,default_path_ntcap_iq,file_listbox_sc,default_path_ntcap_sc):
     
@@ -362,7 +365,8 @@ def reset_sim(file_listbox_iq,default_path_ntcap_iq,file_listbox_sc,default_path
     
     reset_sim_thread_sc = threading.Thread(target=lambda:reset_sim_worker_sc(file_listbox_iq,default_path_ntcap_iq,file_listbox_sc,default_path_ntcap_sc))
     reset_sim_thread_sc.start()
-    
+    #update_file_list(file_listbox_iq,default_path_ntcap_iq,"synced_files_iq.txt",".iq.tdms")
+    #update_file_list(file_listbox_sc,default_path_ntcap_sc,"synced_files_sc.txt",".sc.tdms")
     
         
 def stop_sync_worker(stop_button,start_button,folder_entry_ntcap_iq,folder_entry_luster_iq,folder_entry_ntcap_sc,folder_entry_luster_sc,reset_button,browse_button_ntcap_iq,browse_button_ntcap_sc,should_stop_sync,file_listbox_iq,file_listbox_sc):
@@ -411,27 +415,30 @@ def stop_sync(stop_button,start_button,folder_entry_ntcap_iq,folder_entry_luster
     stop_sync_worker_thread.start()
     
 def update_file_list(file_listbox,directory,synced_files_name="synced_files_iq.txt",end=".iq.tdms"):
-    existing_items = file_listbox.get(0, tk.END)
+    #print("chenrj update_file_list start ")
     files = list_files_in_directory(directory,end)
+    #existing_items = file_listbox.get(0, tk.END)
+    #print("chenrj update_file_list run 0 ")
+    file_listbox.delete(0, tk.END)
     scroll_position=0
-    
+    #print("chenrj update_file_list run 1 ")
     for file in files:
-        if file not in existing_items:  # Only add new files
-            file_listbox.insert(tk.END, file)
-                                    
+        #if file not in existing_items:  # Only add new files
+        file_listbox.insert(tk.END, file)
+    #print("chenrj update_file_list run 2 ")
     synced_files = get_synced_files(synced_files_name)
     for file in files:
         file_fullpath=directory+"/"+file
         if file_fullpath in synced_files:
             set_listbox_iterm_color(file_listbox, file, "green")
-
-def read_paths_file(default_path_ntcap_iq, default_path_luster_iq,paths="paths_iq.txt"):
-    try:
-        with open(paths, "r") as file:
-            lines = file.readlines()
-            return lines[0].strip(), lines[1].strip()
-    except FileNotFoundError:
-        return default_path_ntcap_iq, default_path_luster_iq
+    #print("chenrj update_file_list stop")
+#def read_paths_file(default_path_ntcap_iq, default_path_luster_iq,paths="paths_iq.txt"):
+#    try:
+#        with open(paths, "r") as file:
+#            lines = file.readlines()
+#            return lines[0].strip(), lines[1].strip()
+#    except FileNotFoundError:
+#        return default_path_ntcap_iq, default_path_luster_iq
 
     
 ######################################################################
@@ -440,6 +447,7 @@ import toml
 def read_paths_config(file_path):
     with open(file_path, "r") as file:
         config = toml.load(file)
+    #print("chenrj2 ",config)
     return config["paths"]
     
 
@@ -450,6 +458,7 @@ def main():
         print("Usage: queqiao <path_to_config_file>")
         sys.exit(1)        
     config_file_path = sys.argv[1]
+    #print(".... chenrj1 ", config_file_path)
     
     #config_file_path = "pathsettings_GSI.toml"
     ## read default path
@@ -470,8 +479,8 @@ def main():
     root.geometry(f"{window_width}x{window_height}")
     
 
-    default_path_ntcap_iq, default_path_luster_iq = read_paths_file(default_path_ntcap_iq, default_path_luster_iq,"paths_iq.txt")
-    default_path_ntcap_sc, default_path_luster_sc = read_paths_file(default_path_ntcap_sc, default_path_luster_sc,"paths_sc.txt")
+    #default_path_ntcap_iq, default_path_luster_iq = read_paths_file(default_path_ntcap_iq, default_path_luster_iq,"paths_iq.txt")
+    #default_path_ntcap_sc, default_path_luster_sc = read_paths_file(default_path_ntcap_sc, default_path_luster_sc,"paths_sc.txt")
     
     ## Create a Label for ntcap_iq
     comment_label_ntcap_iq = tk.Label(root, text="NTCAP_IQ:")
