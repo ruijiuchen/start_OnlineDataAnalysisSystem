@@ -200,8 +200,8 @@ def sync_files_worker_iq(default_path_ntcap_iq,default_path_luster_iq, file_list
                         
                         add_synced_file("synced_files_iq.txt",default_path_ntcap_iq, file, elapsed_time)
                         #command = f"rsync -avz  synced_files_iq.txt {default_path_luster_iq}"
-                        command = f"rsync -avz  synced_files_iq.txt ../Analyze_iq_sc"
-                        subprocess.run(command, shell=True, check=True)
+                        #command = f"rsync -avz  synced_files_iq.txt ../Analyze_iq_sc"
+                        #subprocess.run(command, shell=True, check=True)
                         
                         # Update the listbox item color
                         set_listbox_iterm_color(file_listbox_iq, file, "green")
@@ -249,8 +249,8 @@ def sync_files_worker_sc(default_path_ntcap_sc, default_path_luster_sc ,file_lis
                         
                         add_synced_file("synced_files_sc.txt",default_path_ntcap_sc, file, elapsed_time)
                         #command = f"rsync -avz  synced_files_sc.txt {default_path_luster_sc}"
-                        command = f"rsync -avz  synced_files_sc.txt ../Analyze_iq_sc"
-                        subprocess.run(command, shell=True, check=True)
+                        #command = f"rsync -avz  synced_files_sc.txt ../Analyze_iq_sc"
+                        #subprocess.run(command, shell=True, check=True)
                         
                         # Update the listbox item color
                         set_listbox_iterm_color(file_listbox_sc, file, "green")
