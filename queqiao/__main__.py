@@ -135,7 +135,7 @@ def create_directory_on_server(folder_entry_ntcap_iq, folder_entry_luster_iq,fol
         print("Remote directory(sc):", remote_directory_sc)
     else:
         print("Invalid remote path format.")
-        
+    
     # Create an SSH client object
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -167,7 +167,7 @@ def set_listbox_iterm_color(file_listbox, file, color="green"):
         index = file_listbox.get(0, tk.END).index(file)
         file_listbox.itemconfig(index, {'bg': color})
 
-def sync_files_worker_iq(default_path_ntcap_iq,default_path_luster_iq, file_listbox_iq,file_listbox_sc,start_button,should_stop_sync,elapsed_times_iq):
+def sync_files_worker_iq(default_path_ntcap_iq,default_path_luster_iq, file_listbox_iq,file_listbox_sc,start_button,should_stop_sync,elapsed_times_iq, hostname, username, keyfilename, ssh, file_listbox_luster_iq):
     while not should_stop_sync[0]:
         time.sleep(5)
         #with open('paths_iq.txt', 'w') as f:
@@ -187,7 +187,7 @@ def sync_files_worker_iq(default_path_ntcap_iq,default_path_luster_iq, file_list
                 if file_fullpath not in synced_files:
                     start_time = time.time()  # Record the start time
                     #command = f"rsync -avz  {default_path_ntcap_iq}/{file} {destination_user}@{destination_ip}:{destination_dir}"
-                    command = f"scp   {default_path_ntcap_iq}/{file} {default_path_luster_iq}"
+                    command = f"scp {default_path_ntcap_iq}/{file} {username}@{hostname}:{default_path_luster_iq}"
                     try:
                         # Update the listbox item color
                         set_listbox_iterm_color(file_listbox_iq, file, "yellow")
@@ -199,9 +199,9 @@ def sync_files_worker_iq(default_path_ntcap_iq,default_path_luster_iq, file_list
                         speed=file_size/elapsed_time
                         
                         add_synced_file("synced_files_iq.txt",default_path_ntcap_iq, file, elapsed_time)
-                        #command = f"rsync -avz  synced_files_iq.txt {default_path_luster_iq}"
-                        #command = f"rsync -avz  synced_files_iq.txt ../Analyze_iq_sc"
-                        #subprocess.run(command, shell=True, check=True)
+                        command = f"rsync -avz  synced_files_iq.txt {username}@{hostname}:{default_path_luster_iq}"
+                        #command = f"rsync -avz  synced_files_iq.txt ../analyze_iq_sc"
+                        subprocess.run(command, shell=True, check=True)
                         
                         # Update the listbox item color
                         set_listbox_iterm_color(file_listbox_iq, file, "green")
@@ -210,18 +210,17 @@ def sync_files_worker_iq(default_path_ntcap_iq,default_path_luster_iq, file_list
                         current_file_index = files.index(current_file_name) if current_file_name in files else None
                         if current_file_index is not None:
                             scroll_position = max(0, (current_file_index - 2) / len(files))  # You might want to adjust the offset
-                            file_listbox_iq.yview_moveto(scroll_position)            
+                            file_listbox_iq.yview_moveto(scroll_position)
+                        update_file_list_ssh(file_listbox_luster_iq, ssh, default_path_luster_iq,"","")
+                        
                     except subprocess.CalledProcessError:
                         print(f"File synchronization failed for: {file}")
                         # Update the listbox item color
                         set_listbox_iterm_color(file_listbox_iq, file, "red")
 
-def sync_files_worker_sc(default_path_ntcap_sc, default_path_luster_sc ,file_listbox_iq,file_listbox_sc,start_button,should_stop_sync):
+def sync_files_worker_sc(default_path_ntcap_sc, default_path_luster_sc ,file_listbox_iq, file_listbox_sc,start_button,should_stop_sync, hostname, username, keyfilename, ssh, file_listbox_luster_sc):
     while not should_stop_sync[0]:
         time.sleep(5)
-        #with open('paths_sc.txt', 'w') as f:
-        #    f.write(f"{default_path_ntcap_sc}\n")
-        #    f.write(f"{default_path_luster_sc}\n")
         ################ sc #################################################
         if default_path_ntcap_sc:
             #print("chenrj 1")
@@ -235,7 +234,8 @@ def sync_files_worker_sc(default_path_ntcap_sc, default_path_luster_sc ,file_lis
                 file_fullpath=default_path_ntcap_sc + "/" + file
                 if file_fullpath not in synced_files:
                     start_time = time.time()  # Record the start time
-                    command = f"scp   {default_path_ntcap_sc}/{file} {default_path_luster_sc}"
+                    command = f"scp   {default_path_ntcap_sc}/{file} {username}@{hostname}:{default_path_luster_sc}"
+                    #print("chenrj ... ",command)
                     try:
                         # Update the listbox item color
                         set_listbox_iterm_color(file_listbox_sc, file, "yellow")
@@ -248,9 +248,9 @@ def sync_files_worker_sc(default_path_ntcap_sc, default_path_luster_sc ,file_lis
                         speed=file_size/elapsed_time
                         
                         add_synced_file("synced_files_sc.txt",default_path_ntcap_sc, file, elapsed_time)
-                        #command = f"rsync -avz  synced_files_sc.txt {default_path_luster_sc}"
-                        #command = f"rsync -avz  synced_files_sc.txt ../Analyze_iq_sc"
-                        #subprocess.run(command, shell=True, check=True)
+                        command = f"rsync -avz  synced_files_sc.txt {username}@{hostname}:{default_path_luster_sc}"
+                        #command = f"rsync -avz  synced_files_sc.txt ../analyze_iq_sc"
+                        subprocess.run(command, shell=True, check=True)
                         
                         # Update the listbox item color
                         set_listbox_iterm_color(file_listbox_sc, file, "green")
@@ -259,35 +259,46 @@ def sync_files_worker_sc(default_path_ntcap_sc, default_path_luster_sc ,file_lis
                         current_file_index = files.index(current_file_name) if current_file_name in files else None
                         if current_file_index is not None:
                             scroll_position = max(0, (current_file_index - 2) / len(files))  # You might want to adjust the offset
-                            file_listbox_sc.yview_moveto(scroll_position)            
+                            file_listbox_sc.yview_moveto(scroll_position)
+                        update_file_list_ssh(file_listbox_luster_sc, ssh, default_path_luster_sc,"","")
+                        
                     except subprocess.CalledProcessError:
                         print(f"File synchronization failed for: {file}")
                         # Update the listbox item color
                         set_listbox_iterm_color(file_listbox_sc, file, "red")
         
-def sync_files_to_server(start_button,stop_button, folder_entry_ntcap_iq, folder_entry_luster_iq,folder_entry_ntcap_sc, folder_entry_luster_sc,default_path_ntcap_iq,default_path_luster_iq,file_listbox_iq,file_listbox_sc,reset_button,browse_button_ntcap_iq,browse_button_ntcap_sc,should_stop_sync):
+def sync_files_to_server(start_button,stop_button, folder_entry_ntcap_iq, folder_entry_luster_iq,folder_entry_ntcap_sc, folder_entry_luster_sc,default_path_ntcap_iq,default_path_luster_iq,file_listbox_iq,file_listbox_sc,reset_button,browse_button_ntcap_iq,browse_button_ntcap_sc,should_stop_sync, folder_entry_hostname, folder_entry_username, folder_entry_keyfilename,ssh,file_listbox_luster_iq,file_listbox_luster_sc):
     should_stop_sync[0] = False
+    hostname               = folder_entry_hostname.get()
+    username               = folder_entry_username.get()
+    keyfilename            = folder_entry_keyfilename.get()
     default_path_ntcap_iq  = folder_entry_ntcap_iq.get()
-    #default_path_luster_iq = folder_entry_luster_iq.get()
+    default_path_luster_iq = folder_entry_luster_iq.get()
     default_path_ntcap_sc  = folder_entry_ntcap_sc.get()
-    #default_path_luster_sc = folder_entry_luster_sc.get()
+    default_path_luster_sc = folder_entry_luster_sc.get()
     
-    default_path_luster_iq, default_path_luster_sc, flag = create_directory_on_server(folder_entry_ntcap_iq,folder_entry_luster_iq,folder_entry_ntcap_sc, folder_entry_luster_sc)
-    if not flag:
-        return
+    # Create remote directories (IQ and SC)
+    files_luster_iq = create_remote_directory(default_path_luster_iq, ssh)
+    files_luster_sc = create_remote_directory(default_path_luster_sc, ssh)
+
+    update_file_list_ssh(file_listbox_luster_iq, ssh, default_path_luster_iq,"","")
+    update_file_list_ssh(file_listbox_luster_sc, ssh, default_path_luster_sc,"","")
     
     start_button.config(state=tk.DISABLED)  # Disable the start button during syncing
 
     # Initialize an empty dictionary to store the elapsed_time for each file
     elapsed_times_iq = {}
     
-    sync_thread_iq = threading.Thread(target=lambda:sync_files_worker_iq(default_path_ntcap_iq,default_path_luster_iq,file_listbox_iq,file_listbox_sc,start_button,should_stop_sync,elapsed_times_iq))
+    sync_thread_iq = threading.Thread(target=lambda:sync_files_worker_iq(default_path_ntcap_iq,default_path_luster_iq,file_listbox_iq,file_listbox_sc,start_button,should_stop_sync,elapsed_times_iq, hostname, username, keyfilename, ssh, file_listbox_luster_iq))
     sync_thread_iq.start()
     
-    sync_thread_sc = threading.Thread(target=lambda:sync_files_worker_sc(default_path_ntcap_sc, default_path_luster_sc,file_listbox_iq,file_listbox_sc,start_button,should_stop_sync))
+    sync_thread_sc = threading.Thread(target=lambda:sync_files_worker_sc(default_path_ntcap_sc, default_path_luster_sc,file_listbox_iq,file_listbox_sc,start_button,should_stop_sync, hostname, username, keyfilename, ssh, file_listbox_luster_sc))
     sync_thread_sc.start()
     
     stop_button.config(state=tk.NORMAL) # Enable the stop button later when needed
+    folder_entry_hostname.config(state="disabled")
+    folder_entry_username.config(state="disabled")
+    folder_entry_keyfilename.config(state="disabled")
     folder_entry_ntcap_iq.config(state="disabled")  # Disable user input
     folder_entry_luster_iq.config(state="disabled")  # Disable user input
     folder_entry_ntcap_sc.config(state="disabled")  # Disable user input
@@ -365,11 +376,8 @@ def reset_sim(file_listbox_iq,default_path_ntcap_iq,file_listbox_sc,default_path
     
     reset_sim_thread_sc = threading.Thread(target=lambda:reset_sim_worker_sc(file_listbox_iq,default_path_ntcap_iq,file_listbox_sc,default_path_ntcap_sc))
     reset_sim_thread_sc.start()
-    #update_file_list(file_listbox_iq,default_path_ntcap_iq,"synced_files_iq.txt",".iq.tdms")
-    #update_file_list(file_listbox_sc,default_path_ntcap_sc,"synced_files_sc.txt",".sc.tdms")
-    
         
-def stop_sync_worker(stop_button,start_button,folder_entry_ntcap_iq,folder_entry_luster_iq,folder_entry_ntcap_sc,folder_entry_luster_sc,reset_button,browse_button_ntcap_iq,browse_button_ntcap_sc,should_stop_sync,file_listbox_iq,file_listbox_sc):
+def stop_sync_worker(stop_button,start_button,folder_entry_ntcap_iq,folder_entry_luster_iq,folder_entry_ntcap_sc,folder_entry_luster_sc,reset_button,browse_button_ntcap_iq,browse_button_ntcap_sc,should_stop_sync,file_listbox_iq,file_listbox_sc, folder_entry_hostname, folder_entry_username, folder_entry_keyfilename):
     while should_stop_sync[0]: # keep the threading runing until should_stop_analyze[0] = True.
         yellow_files_iq = []  # # Used to store file names with yellow color
         for item_index in range(file_listbox_iq.size()):
@@ -395,10 +403,13 @@ def stop_sync_worker(stop_button,start_button,folder_entry_ntcap_iq,folder_entry
         else:
             # No yellow items, stop blinking
             time.sleep(1)
-            should_stop_sync[0]=False
+            should_stop_sync[0]=True
             original_bg_color = start_button.cget('bg')
             stop_button.config(bg=original_bg_color)  # Restore the original color
             start_button.config(state=tk.NORMAL)
+            folder_entry_hostname.config(state="normal")
+            folder_entry_username.config(state="normal")
+            folder_entry_keyfilename.config(state="normal")
             folder_entry_ntcap_iq.config(state="normal")  # Enable user input
             folder_entry_luster_iq.config(state="normal")  # Enable user input
             folder_entry_ntcap_sc.config(state="normal")  # Enable user input
@@ -407,39 +418,49 @@ def stop_sync_worker(stop_button,start_button,folder_entry_ntcap_iq,folder_entry
             browse_button_ntcap_iq.config(state="normal")
             browse_button_ntcap_sc.config(state="normal")
             
-def stop_sync(stop_button,start_button,folder_entry_ntcap_iq,folder_entry_luster_iq,folder_entry_ntcap_sc,folder_entry_luster_sc,reset_button,browse_button_ntcap_iq,browse_button_ntcap_sc,should_stop_sync,file_listbox_iq,file_listbox_sc):
+def stop_sync(stop_button,start_button,folder_entry_ntcap_iq,folder_entry_luster_iq,folder_entry_ntcap_sc,folder_entry_luster_sc,reset_button,browse_button_ntcap_iq,browse_button_ntcap_sc,should_stop_sync,file_listbox_iq,file_listbox_sc, folder_entry_hostname, folder_entry_username, folder_entry_keyfilename):
     should_stop_sync[0] =True
     stop_button.config(state=tk.DISABLED)  # Disable the stop button
-
-    stop_sync_worker_thread = threading.Thread(target=stop_sync_worker,args=(stop_button,start_button,folder_entry_ntcap_iq,folder_entry_luster_iq,folder_entry_ntcap_sc,folder_entry_luster_sc,reset_button,browse_button_ntcap_iq,browse_button_ntcap_sc,should_stop_sync,file_listbox_iq,file_listbox_sc))
+    
+    stop_sync_worker_thread = threading.Thread(target=stop_sync_worker,args=(stop_button,start_button,folder_entry_ntcap_iq,folder_entry_luster_iq,folder_entry_ntcap_sc,folder_entry_luster_sc,reset_button,browse_button_ntcap_iq,browse_button_ntcap_sc,should_stop_sync,file_listbox_iq,file_listbox_sc, folder_entry_hostname, folder_entry_username, folder_entry_keyfilename))
     stop_sync_worker_thread.start()
     
 def update_file_list(file_listbox,directory,synced_files_name="synced_files_iq.txt",end=".iq.tdms"):
-    #print("chenrj update_file_list start ")
     files = list_files_in_directory(directory,end)
-    #existing_items = file_listbox.get(0, tk.END)
-    #print("chenrj update_file_list run 0 ")
     file_listbox.delete(0, tk.END)
     scroll_position=0
-    #print("chenrj update_file_list run 1 ")
     for file in files:
-        #if file not in existing_items:  # Only add new files
         file_listbox.insert(tk.END, file)
-    #print("chenrj update_file_list run 2 ")
     synced_files = get_synced_files(synced_files_name)
+    
     for file in files:
         file_fullpath=directory+"/"+file
         if file_fullpath in synced_files:
             set_listbox_iterm_color(file_listbox, file, "green")
-    #print("chenrj update_file_list stop")
-#def read_paths_file(default_path_ntcap_iq, default_path_luster_iq,paths="paths_iq.txt"):
-#    try:
-#        with open(paths, "r") as file:
-#            lines = file.readlines()
-#            return lines[0].strip(), lines[1].strip()
-#    except FileNotFoundError:
-#        return default_path_ntcap_iq, default_path_luster_iq
-
+    # Scroll to the last item
+    file_listbox.yview(tk.END)
+    
+def update_file_list_ssh(file_listbox, ssh, directory, synced_files_name="synced_files_iq.txt", end=".iq.tdms"):
+    try:
+        # Execute 'ls' command remotely to list files in the specified directory
+        stdin, stdout, stderr = ssh.exec_command(f"ls {directory}")
+        
+        # Read the command output and split it into a list of filenames
+        files = stdout.read().decode().split('\n')
+        
+        # Filter files by the specified end pattern
+        files = [file for file in files if file.endswith(end)]
+        
+        # Update the file list in the file_listbox
+        file_listbox.delete(0, tk.END)
+        for file in files:
+            file_listbox.insert(tk.END, file)
+        # Scroll to the last item
+        file_listbox.yview(tk.END)
+        
+    except Exception as e:
+        # Handle any exceptions that may occur during the process
+        print(f"Error updating file list: {e}")
     
 ######################################################################
 import toml
@@ -449,8 +470,69 @@ def read_paths_config(file_path):
         config = toml.load(file)
     #print("chenrj2 ",config)
     return config["paths"]
-    
 
+def list_directory_contents(ssh_client, remote_path):
+    """
+    List the contents of a remote directory using the 'ls' command.
+    
+    Parameters:
+    - ssh_client (paramiko.SSHClient): An established SSH client for connecting to the remote server.
+    - remote_path (str): The path of the remote directory to list.
+    """
+    try:
+        # Execute 'ls' command to list directory contents
+        
+        stdin, stdout, stderr = ssh_client.exec_command(f"ls {remote_path}")
+        
+        # Read and print the command output
+        output = stdout.read().decode().strip()
+        #print(f"Contents of remote directory {remote_path}:\n{output}")
+        return output
+    
+    except Exception as e:
+        # Handle any exceptions that may occur during the process
+        print(f"Error listing directory contents: {e}")
+        return []
+    
+def create_remote_directory(remote_path, ssh_client):
+    """
+    Create a remote directory on the server using SSH.
+    
+    Parameters:
+    - remote_path (str): The path of the remote directory to be checked/created.
+    - ssh_client (paramiko.SSHClient): An established SSH client for connecting to the remote server.
+    """
+    #print("chenrj ... create_remote_directory 1")
+    try:
+        #print("chenrj ... create_remote_directory 2")
+        # Establish SSH connection
+        #ssh_client.connect(hostname=ssh_client.get_transport().getpeername()[0])
+        # Use private key authentication (if you have a private key file)
+        #ssh_client.connect(hostname='lxbk0496.gsi.de', username='litv-exp', key_filename='/u/litv-exp/.ssh/id_rsa')
+        # Check if the directory exists
+        stdin, stdout, stderr = ssh_client.exec_command(f"[ -d '{remote_path}' ] && echo 'Exists' || echo 'Not exists'")
+        
+        # Read the command execution result
+        result = stdout.read().decode().strip()
+        #print("chenrj ... create_remote_directory 2: ",result)
+        if result == 'Not exists':
+            # If the directory does not exist, create it
+            ssh_client.exec_command(f"mkdir -p {remote_path}")
+            #print(f"Created remote directory: {remote_path}")
+        else:
+            print(f"Remote directory already exists: {remote_path}")
+            #print("chenrj ... create_remote_directory 3")
+            files = list_directory_contents(ssh_client, remote_path)
+            return files
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        return []
+    finally:
+        # Close the SSH connection
+        return []
+    #print("chenrj ... create_remote_directory 4")
+        
 ######################################################################
 def main():
     
@@ -458,112 +540,161 @@ def main():
         print("Usage: queqiao <path_to_config_file>")
         sys.exit(1)        
     config_file_path = sys.argv[1]
-    #print(".... chenrj1 ", config_file_path)
-    
-    #config_file_path = "pathsettings_GSI.toml"
     ## read default path
     paths_config = read_paths_config(config_file_path)
+    luster_hostname = paths_config["luster_hostname"]
+    luster_username = paths_config["luster_username"]
+    luster_keyfilename = paths_config["luster_keyfilename"]
+
     default_path_ntcap_iq = paths_config["default_path_ntcap_iq"]
     default_path_luster_iq = paths_config["default_path_luster_iq"]
     default_path_ntcap_sc = paths_config["default_path_ntcap_sc"]
     default_path_luster_sc = paths_config["default_path_luster_sc"]
+    
+    # Create an SSH client
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    # Use private key authentication (if you have a private key file)
+    ssh.connect(hostname=luster_hostname, username = luster_username, key_filename=luster_keyfilename)
+    
+    # Create remote directories (IQ and SC)
+    files_luster_iq = create_remote_directory(default_path_luster_iq, ssh)
+    files_luster_sc = create_remote_directory(default_path_luster_sc, ssh)
     
     # Create the main window
     root = tk.Tk()
     root.title("Copy data from ntcap to luster.")
     
     # Set the custom window size (width x height)
-    window_width = 1100
+    window_width = 1300
     window_height = 800
     should_stop_sync = [True]
     root.geometry(f"{window_width}x{window_height}")
-    
+    ## Create a Label for hostname
+    comment_label_hostname = tk.Label(root, text="hostname:")
+    comment_label_hostname.grid(row=0, column=0, padx=10, pady=10, sticky="w")  # Left-aligned
+    # Create an Entry widget for hostname
+    folder_entry_hostname = tk.Entry(root,width=70)
+    folder_entry_hostname.grid(row=0, column=1, columnspan=2,padx=10, pady=10, sticky="w")  # Left-aligned
+    folder_entry_hostname.insert(0, luster_hostname)  # Insert the default path
 
-    #default_path_ntcap_iq, default_path_luster_iq = read_paths_file(default_path_ntcap_iq, default_path_luster_iq,"paths_iq.txt")
-    #default_path_ntcap_sc, default_path_luster_sc = read_paths_file(default_path_ntcap_sc, default_path_luster_sc,"paths_sc.txt")
+    ## Create a Label for username
+    comment_label_username = tk.Label(root, text="username:")
+    comment_label_username.grid(row=1, column=0, padx=10, pady=10, sticky="w")  # Left-aligned
+    # Create an Entry widget for username
+    folder_entry_username = tk.Entry(root,width=70)
+    folder_entry_username.grid(row=1, column=1, columnspan=2,padx=10, pady=10, sticky="w")  # Left-aligned
+    folder_entry_username.insert(0, luster_username)  # Insert the default path
+
+    ## Create a Label for keyfilename
+    comment_label_keyfilename = tk.Label(root, text="keyfilename:")
+    comment_label_keyfilename.grid(row=2, column=0, padx=10, pady=10, sticky="w")  # Left-aligned
+    # Create an Entry widget for keyfilename
+    folder_entry_keyfilename = tk.Entry(root,width=70)
+    folder_entry_keyfilename.grid(row=2, column=1, columnspan=2,padx=10, pady=10, sticky="w")  # Left-aligned
+    folder_entry_keyfilename.insert(0, luster_keyfilename)  # Insert the default path
+    
+    ## Create the "Start" button
+    start_button = tk.Button(root, text="Start", command=lambda:sync_files_to_server(start_button,stop_button,folder_entry_ntcap_iq, folder_entry_luster_iq,folder_entry_ntcap_sc,folder_entry_luster_sc,default_path_ntcap_iq,default_path_luster_iq,file_listbox_iq,file_listbox_sc, reset_button, browse_button_ntcap_iq, browse_button_ntcap_sc, should_stop_sync, folder_entry_hostname, folder_entry_username, folder_entry_keyfilename,ssh,file_listbox_luster_iq,file_listbox_luster_sc))
+    start_button.grid(row=0, column=3, padx=5, pady=10, sticky="w")  # Left-aligned
+    
+    ## Create the "Stop" button
+    stop_button = tk.Button(root, text="Stop", command=lambda:stop_sync(stop_button,start_button,folder_entry_ntcap_iq,folder_entry_luster_iq,folder_entry_ntcap_sc,folder_entry_luster_sc,reset_button,browse_button_ntcap_iq,browse_button_ntcap_sc,should_stop_sync,file_listbox_iq,file_listbox_sc, folder_entry_hostname, folder_entry_username, folder_entry_keyfilename))
+    stop_button.grid(row=1, column=3, padx=5, pady=10, sticky="w")  # Left-aligned
+    
+    ## Create the "Reset" button
+    reset_button = tk.Button(root, text="Reset", command=lambda:reset_sync(file_listbox_iq,default_path_ntcap_iq,file_listbox_sc,default_path_ntcap_sc))
+    reset_button.grid(row=2, column=3, padx=5, pady=10, sticky="w")  # Left-aligned
+
+    ## Create the "Reset simulated data" button
+    reset_sim_button = tk.Button(root, text="Reset sim.", command=lambda:reset_sim(file_listbox_iq,default_path_ntcap_iq,file_listbox_sc,default_path_ntcap_sc))
+    reset_sim_button.grid(row=0, column=4, padx=5, pady=10, sticky="w")  # Left-aligned
     
     ## Create a Label for ntcap_iq
     comment_label_ntcap_iq = tk.Label(root, text="NTCAP_IQ:")
-    comment_label_ntcap_iq.grid(row=0, column=0, padx=10, pady=10, sticky="w")  # Left-aligned
+    comment_label_ntcap_iq.grid(row=3, column=0, padx=10, pady=10, sticky="w")  # Left-aligned
     # Create an Entry widget for ntcap_iq
-    folder_entry_ntcap_iq = tk.Entry(root,width=90)
-    folder_entry_ntcap_iq.grid(row=0, column=1, columnspan=2,padx=10, pady=10, sticky="w")  # Left-aligned
+    folder_entry_ntcap_iq = tk.Entry(root,width=70)
+    folder_entry_ntcap_iq.grid(row=3, column=1, columnspan=2,padx=10, pady=10, sticky="w")  # Left-aligned
     folder_entry_ntcap_iq.insert(0, default_path_ntcap_iq)  # Insert the default path
     
     ## Create a Label for luster_iq
     comment_label_luster_iq = tk.Label(root, text="LUSTER_IQ:")
-    comment_label_luster_iq.grid(row=1, column=0, padx=10, pady=10, sticky="w")  # Left-aligned
+    comment_label_luster_iq.grid(row=4, column=0, padx=10, pady=10, sticky="w")  # Left-aligned
     # Create an Entry widget for luster_iq
-    folder_entry_luster_iq = tk.Entry(root,width=90)
-    folder_entry_luster_iq.grid(row=1, column=1, columnspan=2,padx=10, pady=10, sticky="w")  # Left-aligned
+    folder_entry_luster_iq = tk.Entry(root,width=70)
+    folder_entry_luster_iq.grid(row=4, column=1, columnspan=2,padx=10, pady=10, sticky="w")  # Left-aligned
     folder_entry_luster_iq.insert(0, default_path_luster_iq)  # Insert the default path
-
+    
+    ## Create the file listbox
+    file_listbox_iq = tk.Listbox(root, width = 30,height=25)  # Adjust the height as needed
+    file_listbox_iq.grid(row=5, column=1, padx=10, pady=10, sticky="w")  # Left-aligned
+    # Create a vertical scrollbar for the file listbox
+    file_listbox_iq_scrollbar = tk.Scrollbar(root, orient="vertical")
+    file_listbox_iq_scrollbar.grid(row=5, column=1, sticky="nse")  # Right-aligned
+    # Associate the scrollbar with the file listbox
+    file_listbox_iq.config(yscrollcommand=file_listbox_iq_scrollbar.set)
+    file_listbox_iq_scrollbar.config(command=file_listbox_iq.yview)
+    update_file_list(file_listbox_iq,default_path_ntcap_iq,"synced_files_iq.txt",".iq.tdms")  # Update the file list in file_listbox_iq with default path
+    
+    ## Create the file listbox
+    file_listbox_luster_iq = tk.Listbox(root, width = 30,height=25)  # Adjust the height as needed
+    file_listbox_luster_iq.grid(row=5, column=2, padx=10, pady=10, sticky="w")  # Left-aligned
+    # Create a vertical scrollbar for the file listbox
+    file_listbox_luster_iq_scrollbar = tk.Scrollbar(root, orient="vertical")
+    file_listbox_luster_iq_scrollbar.grid(row=5, column=2, sticky="nse")  # Right-aligned
+    # Associate the scrollbar with the file listbox
+    file_listbox_luster_iq.config(yscrollcommand=file_listbox_luster_iq_scrollbar.set)
+    file_listbox_luster_iq_scrollbar.config(command=file_listbox_luster_iq.yview)
+    update_file_list_ssh(file_listbox_luster_iq, ssh, default_path_luster_iq,"","") 
+    
+    
     ## Create a Label for ntcap_sc
     comment_label_ntcap_sc = tk.Label(root, text="NTCAP_SC:")
-    comment_label_ntcap_sc.grid(row=2, column=0, padx=10, pady=10, sticky="w")  # Left-aligned
+    comment_label_ntcap_sc.grid(row=3, column=4, padx=10, pady=10, sticky="w")  # Left-aligned
     # Create an Entry widget for ntcap_sc
-    folder_entry_ntcap_sc = tk.Entry(root,width=90)
-    folder_entry_ntcap_sc.grid(row=2, column=1,columnspan=2, padx=10, pady=10, sticky="w")  # Left-aligned
+    folder_entry_ntcap_sc = tk.Entry(root,width=70)
+    folder_entry_ntcap_sc.grid(row=3, column=5,columnspan=2, padx=10, pady=10, sticky="w")  # Left-aligned
     folder_entry_ntcap_sc.insert(0, default_path_ntcap_sc)  # Insert the default path
 
     ## Create a Label for luster_sc
     comment_label_luster_sc = tk.Label(root, text="LUSTER_SC:")
-    comment_label_luster_sc.grid(row=3, column=0, padx=10, pady=10, sticky="w")  # Left-aligned
+    comment_label_luster_sc.grid(row=4, column=4, padx=10, pady=10, sticky="w")  # Left-aligned
     # Create an Entry widget for luster_sc
-    folder_entry_luster_sc = tk.Entry(root,width=90)
-    folder_entry_luster_sc.grid(row=3, column=1, columnspan=2,padx=10, pady=10, sticky="w")  # Left-aligned
+    folder_entry_luster_sc = tk.Entry(root,width=70)
+    folder_entry_luster_sc.grid(row=4, column=5, columnspan=2,padx=10, pady=10, sticky="w")  # Left-aligned
     folder_entry_luster_sc.insert(0, default_path_luster_sc)  # Insert the default path
     
     ## Create the file listbox
-    file_listbox_iq = tk.Listbox(root, width = 30,height=25)  # Adjust the height as needed
-    file_listbox_iq.grid(row=4, column=1, padx=10, pady=10, sticky="w")  # Left-aligned
-    # Create a vertical scrollbar for the file listbox
-    file_listbox_iq_scrollbar = tk.Scrollbar(root, orient="vertical")
-    file_listbox_iq_scrollbar.grid(row=4, column=1, sticky="nse")  # Right-aligned
-    
-    # Associate the scrollbar with the file listbox
-    file_listbox_iq.config(yscrollcommand=file_listbox_iq_scrollbar.set)
-    file_listbox_iq_scrollbar.config(command=file_listbox_iq.yview)
-    
-    update_file_list(file_listbox_iq,default_path_ntcap_iq,"synced_files_iq.txt",".iq.tdms")  # Update the file list in file_listbox_iq with default path
-
-    ## Create the file listbox
     file_listbox_sc = tk.Listbox(root, width = 30,height=25)  # Adjust the height as needed
-    file_listbox_sc.grid(row=4, column=2, padx=10, pady=10, sticky="ns")  # Left-aligned
+    file_listbox_sc.grid(row=5, column=5, padx=10, pady=10, sticky="ns")  # Left-aligned
     # Create a vertical scrollbar for the file listbox
     file_listbox_sc_scrollbar = tk.Scrollbar(root, orient="vertical")
-    file_listbox_sc_scrollbar.grid(row=4, column=2, sticky="nse")  # Right-aligned
-    
+    file_listbox_sc_scrollbar.grid(row=5, column=5, sticky="nse")  # Right-aligned
     # Associate the scrollbar with the file listbox
     file_listbox_sc.config(yscrollcommand=file_listbox_sc_scrollbar.set)
     file_listbox_sc_scrollbar.config(command=file_listbox_sc.yview)
     update_file_list(file_listbox_sc,default_path_ntcap_sc,"synced_files_sc.txt",".sc.tdms")  # Update the file list in file_listbox_iq with default path
-
+    
+    ## Create the file listbox
+    file_listbox_luster_sc = tk.Listbox(root, width = 30,height=25)  # Adjust the height as needed
+    file_listbox_luster_sc.grid(row=5, column=6, padx=10, pady=10, sticky="w")  # Left-aligned
+    # Create a vertical scrollbar for the file listbox
+    file_listbox_luster_sc_scrollbar = tk.Scrollbar(root, orient="vertical")
+    file_listbox_luster_sc_scrollbar.grid(row=5, column=6, sticky="nse")  # Right-aligned
+    # Associate the scrollbar with the file listbox
+    file_listbox_luster_sc.config(yscrollcommand=file_listbox_luster_sc_scrollbar.set)
+    file_listbox_luster_sc_scrollbar.config(command=file_listbox_luster_sc.yview)
+    update_file_list_ssh(file_listbox_luster_sc, ssh, default_path_luster_sc,"","")
+    
     # Create a "Browse" button for folder selection
     browse_button_ntcap_iq = tk.Button(root, text="Browse", command=lambda: browse_folder_and_update_list_filebox(folder_entry_ntcap_iq,default_path_ntcap_iq, file_listbox_iq,"synced_files_iq.txt",".iq.tdms"))
-    browse_button_ntcap_iq.grid(row=0, column=4, padx=10, pady=10, sticky="w")  # Left-aligned
+    browse_button_ntcap_iq.grid(row=3, column=3, padx=10, pady=10, sticky="w")  # Left-aligned
     
     # Create a "Browse" button for folder selection
     browse_button_ntcap_sc = tk.Button(root, text="Browse", command=lambda: browse_folder_and_update_list_filebox(folder_entry_ntcap_sc,default_path_ntcap_sc,file_listbox_sc,"synced_files_sc.txt",".sc.tdms"))
-    browse_button_ntcap_sc.grid(row=2, column=4, padx=10, pady=10, sticky="w")  # Left-aligned
+    browse_button_ntcap_sc.grid(row=3, column=7, padx=10, pady=10, sticky="w")  # Left-aligned
     
-    
-    ## Create the "Start" button
-    start_button = tk.Button(root, text="Start", command=lambda:sync_files_to_server(start_button,stop_button,folder_entry_ntcap_iq, folder_entry_luster_iq,folder_entry_ntcap_sc,folder_entry_luster_sc,default_path_ntcap_iq,default_path_luster_iq,file_listbox_iq,file_listbox_sc, reset_button,browse_button_ntcap_iq,browse_button_ntcap_sc,should_stop_sync))
-    start_button.grid(row=1, column=5, padx=5, pady=10, sticky="w")  # Left-aligned
-    
-    ## Create the "Stop" button
-    stop_button = tk.Button(root, text="Stop", command=lambda:stop_sync(stop_button,start_button,folder_entry_ntcap_iq,folder_entry_luster_iq,folder_entry_ntcap_sc,folder_entry_luster_sc,reset_button,browse_button_ntcap_iq,browse_button_ntcap_sc,should_stop_sync,file_listbox_iq,file_listbox_sc))
-    stop_button.grid(row=1, column=6, padx=5, pady=10, sticky="w")  # Left-aligned
-    
-    ## Create the "Reset" button
-    reset_button = tk.Button(root, text="Reset", command=lambda:reset_sync(file_listbox_iq,default_path_ntcap_iq,file_listbox_sc,default_path_ntcap_sc))
-    reset_button.grid(row=5, column=1, padx=5, pady=10, sticky="w")  # Left-aligned
-
-    ## Create the "Reset simulated data" button
-    reset_sim_button = tk.Button(root, text="Reset sim.", command=lambda:reset_sim(file_listbox_iq,default_path_ntcap_iq,file_listbox_sc,default_path_ntcap_sc))
-    reset_sim_button.grid(row=0, column=5, padx=5, pady=10, sticky="w")  # Left-aligned
-
     # Run the main loop
     root.mainloop()
     
