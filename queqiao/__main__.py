@@ -550,14 +550,20 @@ def main():
     default_path_luster_iq = paths_config["default_path_luster_iq"]
     default_path_ntcap_sc = paths_config["default_path_ntcap_sc"]
     default_path_luster_sc = paths_config["default_path_luster_sc"]
-    
-    # Create an SSH client
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    # Use private key authentication (if you have a private key file)
-    ssh.connect(hostname=luster_hostname, username = luster_username, key_filename=luster_keyfilename)
-    
-    # Create remote directories (IQ and SC)
+    try:
+        # Create an SSH client
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        # Use private key authentication (if you have a private key file)
+        ssh.connect(hostname=luster_hostname, username = luster_username, key_filename=luster_keyfilename)
+    except paramiko.AuthenticationException:
+        print("Authentication failed. Please check your credentials.")
+    except paramiko.SSHException as e:
+        print(f"Unable to establish SSH connection: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        # Create remote directories (IQ and SC)
+        
     files_luster_iq = create_remote_directory(default_path_luster_iq, ssh)
     files_luster_sc = create_remote_directory(default_path_luster_sc, ssh)
     
