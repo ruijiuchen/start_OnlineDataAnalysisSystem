@@ -1,0 +1,2 @@
+[console_scripts]
+start_OnlineDataAnalysisSystem = start_OnlineDataAnalysisSystem.__main__:main
