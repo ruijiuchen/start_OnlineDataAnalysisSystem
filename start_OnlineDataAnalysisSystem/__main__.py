@@ -4,11 +4,10 @@ import subprocess
 import toml
 import os
 class CommandWithParameters(QWidget):
-    def __init__(self, label_texts, button_text, command_function, button_color, config_file, parent=None):
+    def __init__(self, label_texts, button_text, button_color, config_file, parent=None):
         super().__init__(parent)
         self.label_texts = label_texts
         self.button_text = button_text
-        self.command_function = command_function
         self.button_color = button_color
         self.config_file = config_file
         
@@ -91,69 +90,6 @@ class CommandWithParameters(QWidget):
         except Exception as e:
             QMessageBox.critical(None, "Error", f"An exception occurred: {str(e)}")                        
     
-def run_commands_queqiao_NTCAP(params):
-    try:
-        Hostname    = params[0]
-        Directory   = params[1]
-        Environment = params[2]
-        Program     = params[3]
-        Parameter   = params[4]
-        ssh_command = [
-            "ssh", "-X", Hostname,
-            "xterm", "-hold", "-e",
-            f"bash -i -c \"cd {Directory} && conda {Environment} && {Program} {Parameter}\""
-        ]
-        subprocess.Popen(ssh_command)
-    except Exception as e:
-        QMessageBox.critical(None, "Error", f"An exception occurred: {str(e)}")
-        
-def run_commands_analyze_iq_sc(params):
-    try:
-        hostname = params[0]
-        print(" hostname ",hostname)
-        ssh_command = [
-            "ssh", "-X", hostname,
-            "xterm", "-hold", "-e",
-            "bash -c \"cd /lustre/astrum/experiment_data/2024-05_E018/OnlineDataAnalysisSystem/analyze_iq_sc && conda activate iqt7_env_ruijiu && analyze_iq_sc ../parameters/analyze_E142exp.toml\""
-        ]
-        subprocess.Popen(ssh_command)
-    except Exception as e:
-        QMessageBox.critical(None, "Error", f"An exception occurred: {str(e)}")
-
-def run_combine_injection(params):
-    print(params)
-    try:
-        hostname       = params[0]
-        file_dir       = params[1]
-        file_start     = params[2]
-        file_stop      = params[3]
-        average_number = params[4]
-        fre_min        = params[5]
-        fre_range      = params[6]
-        date_start     = params[7]
-        ssh_command = [
-            "ssh", "-X", hostname,
-            "xterm", "-hold", "-e",
-            f"bash -i -c 'cd /lustre/astrum/experiment_data/2024-05_E018/OnlineDataAnalysisSystem/combine_injection && conda activate iqt7_env_ruijiu && combine_injection combine_tdms {file_dir} {file_start} {file_stop} {average_number} {fre_min} {fre_range} \"{date_start}\"\'"
-        ]
-        subprocess.Popen(ssh_command)
-    except Exception as e:
-        QMessageBox.critical(None, "Error", f"An exception occurred: {str(e)}")
-
-def run_commands_queqiao_RSA(params):
-    try:
-        hostname = params[0]
-        print(" hostname ",hostname)
-        ssh_command = [
-            "ssh", "-X", hostname,
-            "xterm", "-hold", "-e",
-            "bash -c \"cd /lustre/astrum/experiment_data/2024-05_E018/OnlineDataAnalysisSystem/RSA && /u/litv-exp/mambaforge/bin/queqiao ../parameters/queqiaosettings_rsa.toml\""
-        ]
-        subprocess.Popen(ssh_command)
-    except Exception as e:
-        QMessageBox.critical(None, "Error", f"An exception occurred: {str(e)}")
-        
-        
 def main():
     app = QApplication(sys.argv)
     main_window = QWidget()
@@ -167,7 +103,6 @@ def main():
     hostname_command_ntcap = CommandWithParameters(
         label_texts=["Hostname:","Directory:","Environment:","Program:","Parameter:"],
         button_text="Copy data from NTCAP hard disk to server",
-        command_function=run_commands_queqiao_NTCAP,
         button_color="blue",
         config_file="ntcap_params.toml"
     )
@@ -176,7 +111,6 @@ def main():
     hostname_command_analyze_iq_sc = CommandWithParameters(
         label_texts=["Hostname:","Directory:","Environment:","Program:","Parameter:"],
         button_text="Convert IQ data to frequency data.",
-        command_function=run_commands_analyze_iq_sc,
         button_color="green",
         config_file="analyze_iq_sc_params.toml"
     )
@@ -185,16 +119,22 @@ def main():
     combine_injection_command = CommandWithParameters(
         label_texts=["Hostname:","Directory:","Environment:","Program:","Parameter:"],
         button_text="Run combine_spectrum",
-        command_function=run_combine_injection,
         button_color="red",
         config_file="combine_injection_params.toml"
     )
     param_layout.addWidget(combine_injection_command)
+
+    rionidgui_command = CommandWithParameters(
+        label_texts=["Hostname:","Directory:","Environment:","Program:","Parameter:"],
+        button_text="Run rionidgui",
+        button_color="red",
+        config_file="rionidgui_params.toml"
+    )
+    param_layout.addWidget(rionidgui_command)
     
     hostname_command_queqiao_RSA = CommandWithParameters(
         label_texts=["Hostname:","Directory:","Environment:","Program:","Parameter:"],
         button_text="Copy data from RSA hard disk to server",
-        command_function=run_commands_queqiao_RSA,
         button_color="purple",
         config_file="rsa_params.toml"
     )
@@ -207,6 +147,7 @@ def main():
     button_layout.addWidget(hostname_command_ntcap.run_button)
     button_layout.addWidget(hostname_command_analyze_iq_sc.run_button)
     button_layout.addWidget(combine_injection_command.run_button)
+    button_layout.addWidget(rionidgui_command.run_button)
     button_layout.addWidget(hostname_command_queqiao_RSA.run_button)
     
     layout.addLayout(button_layout)
