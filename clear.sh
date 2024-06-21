@@ -1,1 +1,1 @@
-rm -rf build  queqiao.egg-info queqiao/__pycache__/ synced_files*.txt trans* *~
+rm -rf build  start_OnlineDataAnalysisSystem.egg-info start.egg-info start_OnlineDataAnalysisSystem/__pycache__/ *.toml  start_OnlineDataAnalysisSystem/*~ *~

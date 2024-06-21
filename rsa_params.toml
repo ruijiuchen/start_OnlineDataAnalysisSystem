@@ -1,1 +1,0 @@
-parameters = [ "lxir131", "/lustre/astrum/experiment_data/2024-05_E018/OnlineDataAnalysisSystem/RSA", "activate iqt7_env_ruijiu", "/u/litv-exp/mambaforge/bin/queqiao", "../parameters/queqiaosettings_rsa.toml",]

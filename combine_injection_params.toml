@@ -1,1 +1,0 @@
-parameters = [ "lxbk0498", "/lustre/astrum/experiment_data/2024-05_E018/OnlineDataAnalysisSystem/combine_injection", "activate iqt7_env_ruijiu", "/u/litv-exp/mambaforge/envs/iqt7_env_ruijiu/bin/combine_injection", "../parameters/combine_tdms_parameters.toml",]
